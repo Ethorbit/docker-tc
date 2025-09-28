@@ -34,7 +34,11 @@ docker_container_get_interfaces() {
             fi
         fi
     done < <(echo -e "$IFLINKS")
-    echo "${RESULT::-2}"
+    if [ -n "$RESULT" ]; then
+        echo "${RESULT::-2}"
+    else
+        echo "Skipping container $1: no interfaces found" >&2
+    fi
 }
 docker_network_get_interfaces() {
     NETWORK_ID=$(docker network inspect --format '{{ .Id }}' "$1")
@@ -56,7 +60,11 @@ docker_container_interfaces_in_network() {
             fi
         done < <(echo -e "$CONTAINER_INTERFACES")
     done < <(echo -e "$NETWORK_INTERFACES")
-    echo "${COMMON_INTERFACES::-2}"
+    if [ -n "$COMMON_INTERFACES" ]; then
+        echo "${COMMON_INTERFACES::-2}"
+    else
+        echo "No common interfaces for container $1 in network $2" >&2
+    fi
 }
 CONTAINER_LABELS=
 docker_container_labels_load() {
