@@ -4,7 +4,7 @@ RUN git clone https://github.com/jsoendermann/hapttic.git && \
     cd hapttic/ && \
     go build -o hapttic .
 
-FROM debian:bullseye-slim AS docker-tc
+FROM debian:trixie-slim AS docker-tc
 
 COPY --from=hapttic /go/hapttic/hapttic /usr/bin/hapttic
 RUN hapttic -version && \
@@ -18,17 +18,17 @@ RUN hapttic -version && \
     mkdir -p /var/docker-tc && \
     chmod +x /usr/bin/hapttic
 
+ARG DOCKER_VERSION=""
+RUN ( curl -fsSL get.docker.com | VERSION=${DOCKER_VERSION} CHANNEL=stable sh ) && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
+
 ARG S6_OVERLAY_VERSION=1.21.4.0
 RUN curl -sSfL https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-amd64.tar.gz | tar zxvC / && \
     rm -rf /etc/services.d /etc/cont-init.d /etc/cont-finish.d && \
     ln -sf /docker-tc/etc/services.d /etc && \
     ln -sf /docker-tc/etc/cont-init.d /etc && \
     ln -sf /docker-tc/etc/cont-finish.d /etc
-
-ARG DOCKER_VERSION=""
-RUN ( curl -fsSL get.docker.com | VERSION=${DOCKER_VERSION} CHANNEL=stable sh ) && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt-get clean
 
 ENTRYPOINT ["/init"]
 EXPOSE 80/tcp
